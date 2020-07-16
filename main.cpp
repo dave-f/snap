@@ -23,7 +23,7 @@ void displayUsage()
 
 void processFiles(const std::string& target, const std::string& patch, size_t offset)
 {
-	std::fstream targetFile;
+    std::fstream targetFile;
     std::fstream patchFile;
 
     targetFile.exceptions(std::fstream::failbit | std::fstream::badbit);
@@ -32,7 +32,7 @@ void processFiles(const std::string& target, const std::string& patch, size_t of
     targetFile.open(target, std::ios::binary | std::ios::out | std::ios::in | std::ios::ate);
     patchFile.open(patch, std::ios::binary | std::ios::in | std::ios::ate);
 
-	size_t patchFileSize = patchFile.tellg();
+    size_t patchFileSize = patchFile.tellg();
     size_t targetFileSize = targetFile.tellg();
 
     if ((patchFileSize + offset) > targetFileSize)
@@ -43,9 +43,9 @@ void processFiles(const std::string& target, const std::string& patch, size_t of
     patchFile.seekg(0);
     targetFile.seekg(offset);
     std::vector<uint8_t> patchBuffer(patchFileSize);
-	patchFile.read(reinterpret_cast<char*>(patchBuffer.data()), patchFileSize);
+    patchFile.read(reinterpret_cast<char*>(patchBuffer.data()), patchFileSize);
     targetFile.write(reinterpret_cast<char*>(patchBuffer.data()), patchBuffer.size());
-	patchFile.close();
+    patchFile.close();
     targetFile.close();
 }
 
@@ -57,8 +57,8 @@ int main(int argc, char** argv)
 
     if (argc == 3)
     {
-		inputFile = argv[1];
-		patchFile = argv[2];
+        inputFile = argv[1];
+        patchFile = argv[2];
         offset = 0;
     }
     else if (argc == 4)
@@ -86,11 +86,11 @@ int main(int argc, char** argv)
     }
 
     try
-	{
-		processFiles(inputFile, patchFile, offset);
+    {
+        processFiles(inputFile, patchFile, offset);
 
         return 0;
-	}
+    }
     catch (const std::exception& e)
     {
         std::cout << "Error: " << e.what() << std::endl;
