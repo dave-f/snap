@@ -7,7 +7,7 @@
 #include <vector>
 
 // Build on g++ with -std=c++11
-static constexpr char versionString[] = "1.0";
+static constexpr char versionString[] = "1.1";
 
 void displayTitle()
 {
@@ -16,52 +16,65 @@ void displayTitle()
 
 void displayUsage()
 {
-    std::cout << "A utility to patch a binary file into another" << std::endl << std::endl;
+    std::cout << "A utility to patch a binary file into another," << std::endl;
+    std::cout << "optionally writing out to a new file." << std::endl << std::endl;
     std::cout << "Usage: " << std::endl;
-    std::cout << "        snap <file> <patchfile> [offset]" << std::endl << std::endl;
+    std::cout << "        snap <file> <patchfile> <offset> [newfile]" << std::endl << std::endl;
 }
 
-void processFiles(const std::string& target, const std::string& patch, size_t offset)
+void processFiles(const std::string& src, const std::string& patch, const std::string& dst, size_t offset)
 {
-    std::fstream targetFile;
+    std::fstream srcFile;
     std::fstream patchFile;
+    std::fstream dstFile;
 
-    targetFile.exceptions(std::fstream::failbit | std::fstream::badbit);
+    srcFile.exceptions(std::fstream::failbit | std::fstream::badbit);
     patchFile.exceptions(std::fstream::failbit | std::fstream::badbit);
+    dstFile.exceptions(std::fstream::failbit | std::fstream::badbit);
 
-    targetFile.open(target, std::ios::binary | std::ios::out | std::ios::in | std::ios::ate);
+    srcFile.open(src, std::ios::binary | std::ios::out | std::ios::in | std::ios::ate);
     patchFile.open(patch, std::ios::binary | std::ios::in | std::ios::ate);
 
-    size_t patchFileSize = patchFile.tellg();
-    size_t targetFileSize = targetFile.tellg();
+    std::streamoff patchFileSize = patchFile.tellg();
+    std::streamoff srcFileSize = srcFile.tellg();
 
-    if ((patchFileSize + offset) > targetFileSize)
+    if ((patchFileSize + offset) > srcFileSize)
     {
         throw std::exception("Patch exceeds original size");
     }
 
-    patchFile.seekg(0);
-    targetFile.seekg(offset);
-    std::vector<uint8_t> patchBuffer(patchFileSize);
+    std::vector<uint8_t> patchBuffer(static_cast<size_t>(patchFileSize));
+	patchFile.seekg(0);
     patchFile.read(reinterpret_cast<char*>(patchBuffer.data()), patchFileSize);
-    targetFile.write(reinterpret_cast<char*>(patchBuffer.data()), patchBuffer.size());
+
+    if (dst.empty())
+    {
+		srcFile.seekg(offset);
+		srcFile.write(reinterpret_cast<char*>(patchBuffer.data()), patchBuffer.size());
+    }
+    else
+    {
+		std::vector<uint8_t> srcBuffer(static_cast<size_t>(srcFileSize));
+		srcFile.seekg(0);
+		srcFile.read(reinterpret_cast<char*>(srcBuffer.data()), srcFileSize);
+		std::copy(patchBuffer.begin(), patchBuffer.end(), srcBuffer.begin() + offset);
+		dstFile.open(dst, std::ios::binary | std::ios::out | std::ios::trunc);
+		dstFile.write(reinterpret_cast<char*>(srcBuffer.data()), srcBuffer.size());
+		dstFile.close();
+    }
+
     patchFile.close();
-    targetFile.close();
+    srcFile.close();
 }
 
 int main(int argc, char** argv)
 {
     std::string inputFile;
     std::string patchFile;
+    std::string newFile;
     size_t offset = 0;
 
-    if (argc == 3)
-    {
-        inputFile = argv[1];
-        patchFile = argv[2];
-        offset = 0;
-    }
-    else if (argc == 4)
+    if (argc == 4 || argc == 5)
     {
         inputFile = argv[1];
         patchFile = argv[2];
@@ -76,6 +89,11 @@ int main(int argc, char** argv)
 
             return 1;
         }
+
+        if (argc == 5)
+        {
+            newFile = argv[4];
+        }
     }
     else
     {
@@ -87,7 +105,7 @@ int main(int argc, char** argv)
 
     try
     {
-        processFiles(inputFile, patchFile, offset);
+        processFiles(inputFile, patchFile, newFile, offset);
 
         return 0;
     }
