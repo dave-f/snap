@@ -40,7 +40,7 @@ void processFiles(const std::string& src, const std::string& patch, const std::s
 
     if ((patchFileSize + offset) > srcFileSize)
     {
-        throw std::exception("Patch exceeds original size");
+        throw std::runtime_error("Patch exceeds original size");
     }
 
     std::vector<uint8_t> patchBuffer(static_cast<size_t>(patchFileSize));
