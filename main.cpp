@@ -38,7 +38,7 @@ void processFiles(const std::string& src, const std::string& patch, const std::s
     std::streamoff patchFileSize = patchFile.tellg();
     std::streamoff srcFileSize = srcFile.tellg();
 
-    if ((patchFileSize + offset) > srcFileSize)
+    if ((patchFileSize + (int)offset) > srcFileSize)
     {
         throw std::runtime_error("Patch exceeds original size");
     }
